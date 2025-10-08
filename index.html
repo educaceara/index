@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Ceará Científico 2025</title>
+    <!-- Carregamento do Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet CSS para OpenStreetMap -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .tab-button {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tab-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .tab-button:hover::before {
+            left: 100%;
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(102, 126, 234, 0.4);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .current-activity {
+            border-left: 5px solid #ef4444;
+            background-color: #fef2f2;
+            box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.1), 0 4px 6px -2px rgba(239, 68, 68, 0.05);
+            animation: pulse-border 1.5s infinite alternate;
+        }
+
+        @keyframes pulse-border {
+            from { border-color: #ef4444; }
+            to { border-color: #f87171; }
+        }
+        
+        .medal-gold { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: white; }
+        .medal-silver { background: linear-gradient(135deg, #e5e7eb 0%, #9ca3af 100%); color: white; }
+        .medal-bronze { background: linear-gradient(135deg, #d97706 0%, #92400e 100%); color: white; }
+        .medal-honra { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; }
+        
+        #map { height: 400px; width: 100%; border-radius: 0.5rem; z-index: 1; }
+        
+        .floating-icon {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .pulse-glow {
+            animation: pulse-glow 2s infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(102, 126, 234, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.8); }
+        }
+
+        .banner-slider {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1rem;
+            height: 200px;
+        }
+        
+        .banner-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .banner-slide.active {
+            opacity: 1;
+        }
+
+        .help-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+
+<!-- Header Principal -->
+<header class="max-w-7xl mx-auto mb-8 text-center">
+    <div class="glass-effect rounded-2xl p-8 shadow-2xl">
+        <div class="flex flex-col md:flex-row items-center justify-between">
+            <div class="text-left mb-6 md:mb-0">
+                <h1 class="text-4xl md:text-5xl font-black bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+                    CEARÁ CIENTÍFICO 2025
+                </h1>
+                <p class="text-xl text-gray-700 font-medium">Etapa Regional - CREDE 04</p>
+                <p class="text-lg text-gray-600 mt-2">
+                    <i class="fas fa-flask mr-2 text-purple-500"></i>
+                    Tema: Saberes Científicos em tempos de crise climática global
+                </p>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="floating-icon bg-white p-4 rounded-2xl shadow-2xl mb-4">
+                    <i class="fas fa-atom text-5xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent"></i>
+                </div>
+                <div id="countdown-timer" class="text-2xl font-black text-white bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 rounded-2xl shadow-lg">
+                    <span id="countdown-days">00</span>d <span id="countdown-hours">00</span>h 
+                    <span id="countdown-minutes">00</span>m <span id="countdown-seconds">00</span>s
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-6 pt-6 border-t border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-4 text-gray-700">
+            <div class="flex items-center justify-center">
+                <i class="far fa-calendar text-purple-500 mr-2"></i>
+                <span class="font-semibold">09 de Outubro de 2025</span>
+            </div>
+            <div class="flex items-center justify-center">
+                <i class="fas fa-map-marker-alt text-red-500 mr-2"></i>
+                <span class="font-semibold">CEJA João da Silva Ramos, Camocim</span>
+            </div>
+            <div class="flex items-center justify-center">
+                <i class="fas fa-clock text-green-500 mr-2"></i>
+                <span class="font-semibold">07:10h às 17:00h</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Banner Rotativo -->
+<div class="max-w-7xl mx-auto mb-8">
+    <div class="banner-slider glass-effect shadow-2xl">
+        <div class="banner-slide active" style="background-image: url('https://granjaceara.com.br/app/tema.jpg')"></div>
+        <div class="banner-slide" style="background-image: url('https://granjaceara.com.br/app/crede.jpg')"></div>
+    </div>
+</div>
+
+<!-- Navegação por Abas -->
+<main class="max-w-7xl mx-auto">
+    <div class="glass-effect rounded-2xl shadow-2xl overflow-hidden">
+        
+        <!-- Barra de Navegação -->
+        <nav class="bg-gradient-to-r from-purple-600 to-blue-600 p-1">
+            <div class="flex flex-wrap justify-center gap-2 p-4">
+                <button class="tab-button active px-6 py-3 rounded-xl font-bold text-white bg-white bg-opacity-20 backdrop-blur-sm transition-all duration-300 flex items-center"
+                        data-tab="programacao">
+                    <i class="fas fa-calendar-day mr-2"></i>Programação
+                </button>
+                <button class="tab-button px-6 py-3 rounded-xl font-bold text-white bg-white bg-opacity-20 backdrop-blur-sm transition-all duration-300 flex items-center"
+                        data-tab="mesas">
+                    <i class="fas fa-users mr-2"></i>Mesas
+                </button>
+                <button class="tab-button px-6 py-3 rounded-xl font-bold text-white bg-white bg-opacity-20 backdrop-blur-sm transition-all duration-300 flex items-center"
+                        data-tab="salas">
+                    <i class="fas fa-door-open mr-2"></i>Salas
+                </button>
+                <button class="tab-button px-6 py-3 rounded-xl font-bold text-white bg-white bg-opacity-20 backdrop-blur-sm transition-all duration-300 flex items-center"
+                        data-tab="localizacao">
+                    <i class="fas fa-map-marked-alt mr-2"></i>Localização
+                </button>
+                <button class="tab-button px-6 py-3 rounded-xl font-bold text-white bg-white bg-opacity-20 backdrop-blur-sm transition-all duration-300 flex items-center"
+                        data-tab="premiados">
+                    <i class="fas fa-trophy mr-2"></i>Projetos Premiados
+                </button>
+            </div>
+        </nav>
+
+        <!-- Conteúdo das Abas -->
+        <div class="p-6 md:p-8">
+            
+            <!-- Aba Programação -->
+            <div id="programacao" class="tab-content active">
+                <h2 class="text-3xl font-black text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-calendar-day mr-3 text-purple-500"></i>
+                    Programação do Evento
+                </h2>
+                <div id="main-schedule" class="space-y-4">
+                    <!-- Programação será injetada via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Aba Mesas -->
+            <div id="mesas" class="tab-content hidden">
+                <h2 class="text-3xl font-black text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-users mr-3 text-blue-500"></i>
+                    Mesas de Credenciamento
+                </h2>
+                <div class="mb-6 bg-blue-50 p-6 rounded-2xl card-hover">
+                    <p class="font-semibold text-lg text-blue-700 flex items-center">
+                        <i class="fas fa-info-circle mr-2"></i>Onde se credenciar?
+                    </p>
+                    <p class="mt-2 text-gray-700">Todas as escolas devem se credenciar nas mesas localizadas na <b>Quadra do CEJA JSR</b>, de acordo com a mesa designada.</p>
+                </div>
+                <div id="tab-buttons-mesas" class="flex flex-wrap gap-3 mb-6"></div>
+                <div id="tab-content-mesas" class="p-6 border-2 border-dashed border-blue-200 rounded-2xl bg-white card-hover min-h-[200px]">
+                    <p class="text-gray-500 text-center flex items-center justify-center h-full">
+                        <i class="fas fa-mouse-pointer mr-2"></i>Selecione uma mesa para ver os detalhes
+                    </p>
+                </div>
+            </div>
+
+            <!-- Aba Salas -->
+            <div id="salas" class="tab-content hidden">
+                <h2 class="text-3xl font-black text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-door-open mr-3 text-green-500"></i>
+                    Salas Temáticas
+                </h2>
+                <div class="mb-6 bg-green-50 p-6 rounded-2xl card-hover">
+                    <p class="font-semibold text-lg text-green-700 flex items-center">
+                        <i class="fas fa-info-circle mr-2"></i>Avaliação dos Projetos
+                    </p>
+                    <p class="mt-2 text-gray-700">A <b>avaliação presencial</b> acontece nas <b>Salas Temáticas</b>, de acordo com o tema de cada projeto.</p>
+                </div>
+                <div id="tab-buttons-salas" class="flex flex-wrap gap-3 mb-6"></div>
+                <div id="tab-content-salas" class="p-6 border-2 border-dashed border-green-200 rounded-2xl bg-white card-hover min-h-[200px]">
+                    <p class="text-gray-500 text-center flex items-center justify-center h-full">
+                        <i class="fas fa-mouse-pointer mr-2"></i>Selecione uma sala para ver os detalhes
+                    </p>
+                </div>
+            </div>
+
+            <!-- Aba Localização -->
+            <div id="localizacao" class="tab-content hidden">
+                <h2 class="text-3xl font-black text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-map-marked-alt mr-3 text-red-500"></i>
+                    Localização do Evento
+                </h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-lg card-hover">
+                            <div class="flex items-center mb-4">
+                                <i class="fas fa-school text-3xl text-purple-500 mr-3"></i>
+                                <h3 class="text-2xl font-black text-gray-800">CEJA João da Silva Ramos</h3>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex items-start">
+                                    <i class="fas fa-map-marker-alt text-red-500 mt-1 mr-3 text-lg"></i>
+                                    <div>
+                                        <p class="font-semibold text-gray-700">Endereço:</p>
+                                        <p class="text-gray-600 text-lg">Praça Severiano Morel, Centro, Camocim – CE</p>
+                                    </div>
+                                </div>
+                                <div class="bg-purple-50 p-4 rounded-xl">
+                                    <h4 class="font-semibold text-purple-700 mb-2 flex items-center">
+                                        <i class="fas fa-star mr-2"></i>Serviços Disponíveis
+                                    </h4>
+                                    <div class="grid grid-cols-2 gap-2 text-sm">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-car text-purple-500 mr-2"></i>
+                                            <span>Estacionamento</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i class="fas fa-wifi text-purple-500 mr-2"></i>
+                                            <span>Wi-Fi Grátis</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i class="fas fa-utensils text-purple-500 mr-2"></i>
+                                            <span>Área de Alimentação</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i class="fas fa-wheelchair text-purple-500 mr-2"></i>
+                                            <span>Acessibilidade</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg card-hover">
+                        <div id="map" class="rounded-xl"></div>
+                        <p class="text-center text-gray-600 mt-3 text-sm">
+                            <i class="fas fa-compass mr-2"></i>Use o mapa para explorar a área do evento
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba Projetos Premiados -->
+            <div id="premiados" class="tab-content hidden">
+                <h2 class="text-3xl font-black text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-trophy mr-3 text-yellow-500"></i>
+                    Projetos Premiados
+                </h2>
+                <div class="mb-6 bg-yellow-50 p-6 rounded-2xl card-hover">
+                    <p class="font-semibold text-lg text-yellow-700 flex items-center">
+                        <i class="fas fa-info-circle mr-2"></i>Celebrando a Excelência Científica
+                    </p>
+                    <p class="mt-2 text-gray-700">Conheça os projetos que se destacaram na Etapa Regional do Ceará Científico 2025!</p>
+                </div>
+                <div id="tab-buttons-categorias" class="flex flex-wrap gap-3 mb-6"></div>
+                <div id="tab-content-premiados" class="p-6 border-2 border-dashed border-yellow-200 rounded-2xl bg-white card-hover min-h-[400px]">
+                    <p class="text-gray-500 text-center flex items-center justify-center h-full">
+                        <i class="fas fa-mouse-pointer mr-2"></i>Selecione uma categoria para ver os projetos premiados
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<!-- Botão de Ajuda Flutuante -->
+<a href="https://whatsa.me/5588992422444/?t=Oi,%20Cear%C3%A1%20Cient%C3%ADfico!%20Preciso%20de%20ajuda." 
+   target="_blank"
+   class="help-button bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 flex items-center justify-center">
+    <i class="fas fa-comments text-2xl"></i>
+</a>
+
+<!-- Footer -->
+<footer class="max-w-7xl mx-auto mt-8 text-center">
+    <div class="glass-effect rounded-2xl p-6 shadow-2xl">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-4 md:mb-0">
+                <p class="text-gray-700 font-medium">
+                    <i class="fas fa-robot mr-2 text-purple-500"></i>
+                    Site produzido por AGIs Lira Dutra e Cláudio Faustino utilizando IA.
+                </p>
+                <p class="text-gray-600 text-sm mt-1">Crede4 - Camocim/CE, 2025.</p>
+            </div>
+            <div class="flex space-x-4">
+                <a href="https://www.instagram.com/crede04" class="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-3 rounded-xl hover:scale-110 transition-transform duration-300">
+                    <i class="fab fa-instagram text-lg"></i>
+                </a>
+                <a href="https://www.facebook.com/crede.crede.31" class="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-3 rounded-xl hover:scale-110 transition-transform duration-300">
+                    <i class="fab fa-facebook text-lg"></i>
+                </a>
+                <a href="https://www.crede04.seduc.ce.gov.br" class="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-3 rounded-xl hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-envelope text-lg"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // ========== CONFIGURAÇÕES GLOBAIS ==========
+    const EVENT_DATE_STRING = '10/09/2025';
+    const EVENT_START_TIME = new Date(`${EVENT_DATE_STRING} 08:00:00`).getTime();
+
+    // ========== DADOS DA APLICAÇÃO ==========
+    const scheduleData = [
+        { start: "07:10", end: "08:30", event: "Credenciamento e Café da Manhã", location: "Quadra e Pátio CEJA JSR", icon: "fas fa-user-check" },
+        { start: "08:30", end: "09:00", event: "Abertura Oficial do Ceará Científico", location: "Quadra e Pátio CEJA JSR", icon: "fas fa-microphone" },
+        { start: "09:00", end: "11:30", event: "Avaliação Presencial (jurados) e Exposição dos projetos ao público", location: "Salas temáticas/Quada do CEJA", icon: "fas fa-clipboard-check" },
+        { start: "11:00", end: "13:00", event: "Almoço", location: "Refeitório", icon: "fas fa-utensils" },
+        { start: "14:30", end: "15:00", event: "Entrega dos Kits Lanches", location: "Quadra", icon: "fas fa-comments" },
+        { start: "15:00", end: "15:30", event: "Cerimônia de divulgação dos vencedores e encerramento", location: "Quadra do CEJA JSR", icon: "fas fa-trophy" },
+    ];
+
+    const mesasCredenciamento = [
+        { 
+            id: 'mesa1', title: 'Mesa 1', theme: 'Credenciamento', location: 'Quadra CEJA JSR',
+            icon: 'fas fa-user-friends', schools: ["EEMTI Monsenhor José Carneiro da Cunha", "Jaime Laurindo da Silva", "Prefeito Dário Campos Feijó", "Nossa Senhora do Livramento", "EEM Olímpio Sampaio da Silva",]
+        },
+        { 
+            id: 'mesa2', title: 'Mesa 2', theme: 'Credenciamento', location: 'Quadra CEJA JSR',
+            icon: 'fas fa-user-friends', schools: ["EEMTI Nossa Senhora do Livramento", "São José", "EEF Dona Sinhá", "EEM Coronel Luiz Felipe", "CEJA Guilherme Gouveia", "EEEP Professor Emmanuel Oliveira de Arruda Coelho", "Guilherme Teles Gouveia", "EEF Chico Mundoca"]
+        },
+        { 
+            id: 'mesa3', title: 'Mesa 3', theme: 'Credenciamento', location: 'Quadra CEJA JSR',
+            icon: 'fas fa-user-friends', schools: ["EEEP Guilherme Teles Gouveia", "EEMTI Dep. Murilo Aguiar", "Monsenhor José Expedito da Silveira de Sousa", "CEJA João da Silva Ramos", "EEF Padre José Roberto"]
+        },
+        { 
+            id: 'mesa4', title: 'Mesa 4', theme: 'Credenciamento', location: 'Quadra CEJA JSR',
+            icon: 'fas fa-user-friends', schools: ["CEJA João da Silva Ramos", "EEM Francisco de Assis Fontenele", "EEMTI Maria Stela Rocha Aguiar", "EEF Cel. Domigos A. Pereira", "Jurados e servidores da Crede 4 (Apoio)"]
+        }
+    ];
+
+    const salasTematicas = [
+        { 
+            id: 'sala1', title: 'Sala 1 - Categoria PCD', theme: 'Categoria Pessoa com Deficiência', location: 'Sala LEI',
+            icon: 'fas fa-universal-access', schools: ["Projetos da Categoria Pessoa com Deficiência (PCD)."]
+        },
+        { 
+            id: 'sala2', title: 'Sala 2 - TICs', theme: 'Robótica, Automação e Aplicação das TICs', location: 'Sala dos Professores',
+            icon: 'fas fa-laptop-code', schools: ["Projetos das áreas de Automação e TICs."]
+        },
+        { 
+            id: 'sala3', title: 'Sala 3 - Natureza', theme: 'Natureza e suas Tecnologias', location: 'Sala Natureza',
+            icon: 'fas fa-leaf', schools: ["Projetos das áreas de Ciências da Natureza."]
+        },
+        { 
+            id: 'sala4', title: 'Sala 4 - Linguagens', theme: 'Linguagens e suas Tecnologias', location: 'Sala de Linguagem',
+            icon: 'fas fa-language', schools: ["Projetos das áreas de Linguagens."]
+        },
+        { 
+            id: 'sala5', title: 'Sala 5 - Matemática', theme: 'Matemática e suas Tecnologias', location: 'Sala de Matemática',
+            icon: 'fas fa-calculator', schools: ["Projetos das áreas de Matemática."]
+        },
+        { 
+            id: 'sala6', title: 'Sala 6 - Humanas', theme: 'Ciências Humanas', location: 'Sala de Projeção',
+            icon: 'fas fa-globe-americas', schools: ["Projetos das áreas de Ciências Humanas."]
+        },
+        { 
+            id: 'sala7', title: 'Sala 7 - CEJAs', theme: 'CEJAs', location: 'Sala Extra',
+            icon: 'fas fa-school', schools: ["Projetos das Escolas CEJAS."]
+        },
+        { 
+            id: 'sala8', title: 'Sala 8 - Pesquisa Júnior', theme: 'Pesquisa Júnior / Sala de Apoio', location: 'Diretoria',
+            icon: 'fas fa-search', schools: ["Equipes da Crede 4 (Apoio e Jurados de Pesquisa Júnior)."]
+        }
+    ];
+
+    const projetosPremiados = [
+        { 
+            id: 'categoria-natureza', title: 'Ciências da Natureza', icon: 'fas fa-leaf',
+            projetos: [
+                { colocacao: '1º Lugar - Ouro', medalha: 'medal-gold', titulo: 'AGUARDANDO RESULTADO...', escola: 'GUARDANDO RESULTADO...', alunos: 'GUARDANDO RESULTADO...', orientador: 'GUARDANDO RESULTADO...', resumo: 'GUARDANDO RESULTADO...' },
+                { colocacao: '2º Lugar - Prata', medalha: 'medal-silver', titulo: 'GUARDANDO RESULTADO...', escola: 'GUARDANDO RESULTADO...', alunos: 'GUARDANDO RESULTADO...', orientador: 'PGUARDANDO RESULTADO...', resumo: 'GUARDANDO RESULTADO...' },
+               
+            ]
+        },
+        { 
+            id: 'categoria-humanas', title: 'Ciências Humanas', icon: 'fas fa-globe-americas',
+            projetos: [
+               { colocacao: '1º Lugar - Ouro', medalha: 'medal-gold', titulo: 'AGUARDANDO RESULTADO...', escola: 'GUARDANDO RESULTADO...', alunos: 'GUARDANDO RESULTADO...', orientador: 'GUARDANDO RESULTADO...', resumo: 'GUARDANDO RESULTADO...' },
+                { colocacao: '2º Lugar - Prata', medalha: 'medal-silver', titulo: 'GUARDANDO RESULTADO...', escola: 'GUARDANDO RESULTADO...', alunos: 'GUARDANDO RESULTADO...', orientador: 'PGUARDANDO RESULTADO...', resumo: 'GUARDANDO RESULTADO...' },
+            ]
+        },
+        { 
+            id: 'categoria-matematica', title: 'Matemática e Tecnologias', icon: 'fas fa-calculator',
+            projetos: [
+                { colocacao: '1º Lugar - Ouro', medalha: 'medal-gold', titulo: 'AGUARDANDO RESULTADO...', escola: 'GUARDANDO RESULTADO...', alunos: 'GUARDANDO RESULTADO...', orientador: 'GUARDANDO RESULTADO...', resumo: 'GUARDANDO RESULTADO...' },
+                { colocacao: '2º Lugar - Prata', medalha: 'medal-silver', titulo: 'GUARDANDO RESULTADO...', escola: 'GUARDANDO RESULTADO...', alunos: 'GUARDANDO RESULTADO...', orientador: 'PGUARDANDO RESULTADO...', resumo: 'GUARDANDO RESULTADO...' },
+            ]
+        },
+        { 
+            id: 'categoria-linguagens', title: 'Linguagens e Códigos', icon: 'fas fa-language',
+            projetos: [
+                { colocacao: '1º Lugar - Ouro', medalha: 'medal-gold', titulo: 'AGUARDANDO RESULTADO...', escola: 'GUARDANDO RESULTADO...', alunos: 'GUARDANDO RESULTADO...', orientador: 'GUARDANDO RESULTADO...', resumo: 'GUARDANDO RESULTADO...' },
+                { colocacao: '2º Lugar - Prata', medalha: 'medal-silver', titulo: 'GUARDANDO RESULTADO...', escola: 'GUARDANDO RESULTADO...', alunos: 'GUARDANDO RESULTADO...', orientador: 'PGUARDANDO RESULTADO...', resumo: 'GUARDANDO RESULTADO...' },
+            ]
+        },
+        { 
+            id: 'categoria-tic', title: 'TICs e Robótica', icon: 'fas fa-laptop-code',
+            projetos: [
+               { colocacao: '1º Lugar - Ouro', medalha: 'medal-gold', titulo: 'AGUARDANDO RESULTADO...', escola: 'GUARDANDO RESULTADO...', alunos: 'GUARDANDO RESULTADO...', orientador: 'GUARDANDO RESULTADO...', resumo: 'GUARDANDO RESULTADO...' },
+                { colocacao: '2º Lugar - Prata', medalha: 'medal-silver', titulo: 'GUARDANDO RESULTADO...', escola: 'GUARDANDO RESULTADO...', alunos: 'GUARDANDO RESULTADO...', orientador: 'PGUARDANDO RESULTADO...', resumo: 'GUARDANDO RESULTADO...' },
+            ]
+        },
+        { 
+            id: 'categoria-pcd', title: 'Categoria PCD', icon: 'fas fa-universal-access',
+            projetos: [
+                { colocacao: '1º Lugar - Ouro', medalha: 'medal-gold', titulo: 'AGUARDANDO RESULTADO...', escola: 'GUARDANDO RESULTADO...', alunos: 'GUARDANDO RESULTADO...', orientador: 'GUARDANDO RESULTADO...', resumo: 'GUARDANDO RESULTADO...' },
+                { colocacao: '2º Lugar - Prata', medalha: 'medal-silver', titulo: 'GUARDANDO RESULTADO...', escola: 'GUARDANDO RESULTADO...', alunos: 'GUARDANDO RESULTADO...', orientador: 'PGUARDANDO RESULTADO...', resumo: 'GUARDANDO RESULTADO...' },
+            ]
+        }
+    ];
+
+    // ========== FUNÇÕES UTILITÁRIAS ==========
+    function createEventDate(timeString) {
+        return new Date(`${EVENT_DATE_STRING} ${timeString}:00`);
+    }
+
+    function formatSchoolsList(schools) {
+        if (!schools || schools.length === 0) return '';
+        const items = schools.map(school => `<li class="ml-4 list-disc text-gray-700">${school}</li>`).join('');
+        return `<ul class="mt-2">${items}</ul>`;
+    }
+
+    // ========== BANNER ROTATIVO ==========
+    function initializeBannerSlider() {
+        const slides = document.querySelectorAll('.banner-slide');
+        let currentSlide = 0;
+        
+        function showSlide(index) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+        }
+        
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % slides.length;
+            showSlide(currentSlide);
+        }
+        
+        // Troca de slide a cada 5 segundos
+        setInterval(nextSlide, 5000);
+    }
+
+    // ========== SISTEMA DE ABAS PRINCIPAIS ==========
+    function initializeTabSystem() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetTab = button.getAttribute('data-tab');
+                
+                // Remove active class from all buttons and contents
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    content.classList.add('hidden');
+                });
+                
+                // Add active class to clicked button and target content
+                button.classList.add('active');
+                const targetContent = document.getElementById(targetTab);
+                targetContent.classList.add('active');
+                targetContent.classList.remove('hidden');
+                
+                // Initialize specific tab content if needed
+                if (targetTab === 'localizacao') {
+                    setTimeout(initializeMap, 100);
+                }
+            });
+        });
+    }
+
+    // ========== CONTAGEM REGRESSIVA ==========
+    function updateCountdown() {
+        const now = new Date().getTime();
+        const distance = EVENT_START_TIME - now;
+        
+        if (distance < 0) {
+            document.getElementById('countdown-days').textContent = "00";
+            document.getElementById('countdown-hours').textContent = "00";
+            document.getElementById('countdown-minutes').textContent = "00";
+            document.getElementById('countdown-seconds').textContent = "00";
+            return;
+        }
+
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        document.getElementById('countdown-days').textContent = days.toString().padStart(2, '0');
+        document.getElementById('countdown-hours').textContent = hours.toString().padStart(2, '0');
+        document.getElementById('countdown-minutes').textContent = minutes.toString().padStart(2, '0');
+        document.getElementById('countdown-seconds').textContent = seconds.toString().padStart(2, '0');
+    }
+
+    // ========== PROGRAMAÇÃO PRINCIPAL ==========
+    function highlightCurrentActivity() {
+        const mainScheduleEl = document.getElementById('main-schedule');
+        const now = new Date();
+        
+        const scheduleHTML = scheduleData.map(item => {
+            const startTime = createEventDate(item.start).getTime();
+            const endTime = createEventDate(item.end).getTime();
+            const nowTime = now.getTime();
+            
+            const isCurrent = nowTime >= startTime && nowTime < endTime;
+            const highlightClass = isCurrent ? 'current-activity' : '';
+            const isFinished = nowTime >= endTime;
+            const finishedClass = isFinished ? 'opacity-50' : '';
+            const cardBg = isCurrent ? 'bg-red-50' : 'bg-gray-100';
+
+            return `
+                <div class="flex items-start p-4 ${cardBg} rounded-2xl shadow-lg transition duration-300 ${highlightClass} ${finishedClass} card-hover">
+                    <div class="w-12 flex-shrink-0 flex justify-center items-center">
+                        <i class="${item.icon} text-purple-600 text-xl"></i>
+                    </div>
+                    <div class="w-28 flex-shrink-0 text-lg font-black text-purple-800">${item.start} - ${item.end}</div>
+                    <div class="flex-1">
+                        <p class="text-lg font-black text-gray-800">${item.event}</p>
+                        <p class="text-sm text-gray-600 italic">${item.location}</p>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        mainScheduleEl.innerHTML = scheduleHTML;
+    }
+
+    // ========== SISTEMA DE MESAS ==========
+    function initializeMesasSystem() {
+        const tabButtonsMesasEl = document.getElementById('tab-buttons-mesas');
+        const tabButtonsMesasHTML = mesasCredenciamento.map(session => `
+            <button class="tab-button-mesa px-4 py-2 rounded-xl border-2 border-blue-300 text-blue-700 bg-white hover:bg-blue-50 transition duration-300 flex items-center font-semibold"
+                    data-session-id="${session.id}">
+                <i class="${session.icon} mr-2"></i>${session.title}
+            </button>
+        `).join('');
+        tabButtonsMesasEl.innerHTML = tabButtonsMesasHTML;
+
+        document.querySelectorAll('.tab-button-mesa').forEach(button => {
+            button.addEventListener('click', () => {
+                const sessionId = button.getAttribute('data-session-id');
+                renderMesaContent(sessionId);
+            });
+        });
+
+        if (mesasCredenciamento.length > 0) {
+            renderMesaContent(mesasCredenciamento[0].id);
+        }
+    }
+
+    function renderMesaContent(sessionId) {
+        const session = mesasCredenciamento.find(s => s.id === sessionId);
+        const tabContent = document.getElementById('tab-content-mesas');
+        
+        document.querySelectorAll('.tab-button-mesa').forEach(btn => {
+            btn.classList.remove('bg-blue-500', 'text-white');
+            btn.classList.add('bg-white', 'text-blue-700', 'border-blue-300');
+        });
+        
+        const activeButton = document.querySelector(`.tab-button-mesa[data-session-id="${sessionId}"]`);
+        if (activeButton) {
+            activeButton.classList.remove('bg-white', 'text-blue-700', 'border-blue-300');
+            activeButton.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+        }
+
+        if (session) {
+            tabContent.innerHTML = `
+                <div class="fade-in">
+                    <div class="flex items-center mb-4">
+                        <i class="${session.icon} text-2xl mr-3 text-blue-600"></i>
+                        <h4 class="text-xl font-black text-blue-800">${session.title}</h4>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <p class="text-lg font-semibold text-gray-700 mb-2">Tipo: <span class="font-normal">${session.theme}</span></p>
+                            <p class="text-lg font-semibold text-gray-700">Local: <span class="font-normal text-blue-600">${session.location}</span></p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-xl">
+                            <h5 class="text-base font-semibold text-gray-600">Escolas designadas:</h5>
+                            <div class="text-base mt-2 max-h-40 overflow-y-auto">${formatSchoolsList(session.schools)}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    // ========== SISTEMA DE SALAS ==========
+    function initializeSalasSystem() {
+        const tabButtonsSalasEl = document.getElementById('tab-buttons-salas');
+        const tabButtonsSalasHTML = salasTematicas.map(session => `
+            <button class="tab-button-sala px-4 py-2 rounded-xl border-2 border-green-300 text-green-700 bg-white hover:bg-green-50 transition duration-300 flex items-center font-semibold"
+                    data-session-id="${session.id}">
+                <i class="${session.icon} mr-2"></i>${session.title}
+            </button>
+        `).join('');
+        tabButtonsSalasEl.innerHTML = tabButtonsSalasHTML;
+
+        document.querySelectorAll('.tab-button-sala').forEach(button => {
+            button.addEventListener('click', () => {
+                const sessionId = button.getAttribute('data-session-id');
+                renderSalaContent(sessionId);
+            });
+        });
+
+        if (salasTematicas.length > 0) {
+            renderSalaContent(salasTematicas[0].id);
+        }
+    }
+
+    function renderSalaContent(sessionId) {
+        const session = salasTematicas.find(s => s.id === sessionId);
+        const tabContent = document.getElementById('tab-content-salas');
+        
+        document.querySelectorAll('.tab-button-sala').forEach(btn => {
+            btn.classList.remove('bg-green-500', 'text-white');
+            btn.classList.add('bg-white', 'text-green-700', 'border-green-300');
+        });
+        
+        const activeButton = document.querySelector(`.tab-button-sala[data-session-id="${sessionId}"]`);
+        if (activeButton) {
+            activeButton.classList.remove('bg-white', 'text-green-700', 'border-green-300');
+            activeButton.classList.add('bg-green-500', 'text-white', 'border-green-500');
+        }
+
+        if (session) {
+            tabContent.innerHTML = `
+                <div class="fade-in">
+                    <div class="flex items-center mb-4">
+                        <i class="${session.icon} text-2xl mr-3 text-green-600"></i>
+                        <h4 class="text-xl font-black text-green-800">${session.title}</h4>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <p class="text-lg font-semibold text-gray-700 mb-2">Tema: <span class="font-normal">${session.theme}</span></p>
+                            <p class="text-lg font-semibold text-gray-700">Local: <span class="font-normal text-green-600">${session.location}</span></p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-xl">
+                            <h5 class="text-base font-semibold text-gray-600">Foco da Sala:</h5>
+                            <div class="text-base mt-2 max-h-40 overflow-y-auto">${formatSchoolsList(session.schools)}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    // ========== SISTEMA DE PROJETOS PREMIADOS ==========
+    function initializePremiadosSystem() {
+        const tabButtonsCategoriasEl = document.getElementById('tab-buttons-categorias');
+        const tabButtonsCategoriasHTML = projetosPremiados.map(categoria => `
+            <button class="tab-button-categoria px-4 py-2 rounded-xl border-2 border-yellow-300 text-yellow-700 bg-white hover:bg-yellow-50 transition duration-300 flex items-center font-semibold"
+                    data-categoria-id="${categoria.id}">
+                <i class="${categoria.icon} mr-2"></i>${categoria.title}
+            </button>
+        `).join('');
+        tabButtonsCategoriasEl.innerHTML = tabButtonsCategoriasHTML;
+
+        document.querySelectorAll('.tab-button-categoria').forEach(button => {
+            button.addEventListener('click', () => {
+                const categoriaId = button.getAttribute('data-categoria-id');
+                renderPremiadosContent(categoriaId);
+            });
+        });
+
+        if (projetosPremiados.length > 0) {
+            renderPremiadosContent(projetosPremiados[0].id);
+        }
+    }
+
+    function renderPremiadosContent(categoriaId) {
+        const categoria = projetosPremiados.find(c => c.id === categoriaId);
+        const tabContent = document.getElementById('tab-content-premiados');
+        
+        document.querySelectorAll('.tab-button-categoria').forEach(btn => {
+            btn.classList.remove('bg-yellow-500', 'text-white');
+            btn.classList.add('bg-white', 'text-yellow-700', 'border-yellow-300');
+        });
+        
+        const activeButton = document.querySelector(`.tab-button-categoria[data-categoria-id="${categoriaId}"]`);
+        if (activeButton) {
+            activeButton.classList.remove('bg-white', 'text-yellow-700', 'border-yellow-300');
+            activeButton.classList.add('bg-yellow-500', 'text-white', 'border-yellow-500');
+        }
+
+        if (categoria) {
+            const projetosHTML = categoria.projetos.map(projeto => `
+                <div class="fade-in mb-6 p-4 border-2 border-gray-200 rounded-2xl bg-white shadow-lg card-hover">
+                    <div class="flex flex-col md:flex-row md:items-start gap-4">
+                        <div class="flex-shrink-0">
+                            <div class="${projeto.medalha} w-16 h-16 rounded-2xl flex items-center justify-center font-black text-sm text-center leading-tight shadow-lg">
+                                ${projeto.colocacao.split(' - ')[0]}
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3">
+                                <h4 class="text-lg font-black text-gray-800">${projeto.titulo}</h4>
+                                <span class="mt-1 sm:mt-0 px-3 py-1 ${projeto.medalha} text-white text-sm font-semibold rounded-full shadow">
+                                    ${projeto.colocacao}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <p class="text-sm text-gray-600"><span class="font-semibold">Escola:</span> ${projeto.escola}</p>
+                                    <p class="text-sm text-gray-600"><span class="font-semibold">Estudantes:</span> ${projeto.alunos}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600"><span class="font-semibold">Orientador:</span> ${projeto.orientador}</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-xl">
+                                <p class="text-sm font-semibold text-gray-700 mb-1">Resumo do Projeto:</p>
+                                <p class="text-sm text-gray-600">${projeto.resumo}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            tabContent.innerHTML = `
+                <div class="fade-in">
+                    <div class="flex items-center mb-6">
+                        <i class="${categoria.icon} text-2xl mr-3 text-yellow-600"></i>
+                        <h4 class="text-xl font-black text-yellow-800">${categoria.title}</h4>
+                    </div>
+                    ${projetosHTML}
+                </div>
+            `;
+        }
+    }
+
+    // ========== MAPA INTERATIVO ==========
+    function initializeMap() {
+        if (document.getElementById('map').hasChildNodes()) return;
+        
+        const eventLocation = [-2.9022, -40.8411];
+        const map = L.map('map').setView(eventLocation, 16);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 18
+        }).addTo(map);
+        
+        const customIcon = L.divIcon({
+            html: '<i class="fas fa-map-marker-alt text-4xl text-red-500 shadow-lg"></i>',
+            iconSize: [30, 30],
+            iconAnchor: [15, 30],
+            className: 'custom-marker'
+        });
+        
+        const marker = L.marker(eventLocation, { icon: customIcon }).addTo(map);
+        
+        marker.bindPopup(`
+            <div class="p-2">
+                <h3 class="font-black text-lg text-purple-800">CEJA João da Silva Ramos</h3>
+                <p class="text-sm text-gray-600 mt-1">Praça Severiano Morel, Centro</p>
+                <p class="text-sm text-gray-600">Camocim - CE</p>
+                <div class="mt-2 pt-2 border-t border-gray-200">
+                    <p class="text-xs text-gray-500"><i class="fas fa-calendar mr-1"></i>09.10.2025 | 07:10-17:00h</p>
+                </div>
+            </div>
+        `).openPopup();
+        
+        L.control.scale({ imperial: false }).addTo(map);
+    }
+
+    // ========== INICIALIZAÇÃO DA APLICAÇÃO ==========
+    function initializeApp() {
+        // Banner rotativo
+        initializeBannerSlider();
+        
+        // Sistema principal de abas
+        initializeTabSystem();
+        
+        // Contagem regressiva
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+        
+        // Programação principal
+        highlightCurrentActivity();
+        setInterval(highlightCurrentActivity, 60000);
+        
+        // Sistemas específicos
+        initializeMesasSystem();
+        initializeSalasSystem();
+        initializePremiadosSystem();
+        
+        // Mapa (inicializado quando necessário)
+        if (document.getElementById('localizacao').classList.contains('active')) {
+            setTimeout(initializeMap, 100);
+        }
+    }
+
+    // Inicializa quando a página carrega
+    window.onload = initializeApp;
+</script>
+</body>
+</html>
